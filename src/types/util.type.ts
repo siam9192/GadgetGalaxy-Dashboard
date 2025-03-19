@@ -9,7 +9,7 @@ export type TRoute = {
   element?: ReactNode;
 };
 
-export type TFieldError  = Record<string,string>
+export type TFieldError = Record<string, string>;
 
 export type TSidebarRoute = Pick<TRoute, "title" | "path" | "icon" | "children">;
 export type TRouterRoute = Pick<TRoute, "element" | "path"> & {
