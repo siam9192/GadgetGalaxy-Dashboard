@@ -1,22 +1,30 @@
 import { TfiMenu } from "react-icons/tfi";
 import generalRoutes from "../../routes/generalRoutes";
 import superAdminRoutes from "../../routes/superAdmin.routes";
-import { formatSidebarRoutes } from "../../utils/function";
+import { formatRouterRoutes, formatSidebarRoutes } from "../../utils/function";
 import SidebarButton from "./SidebarButton";
 import { IoLogOut } from "react-icons/io5";
+import { RxCross2 } from "react-icons/rx";
 
-const Sidebar = () => {
+interface IProps {
+  closeFn?:()=>void
+}
+
+const Sidebar = ({closeFn}:IProps) => {
   const routes = formatSidebarRoutes(superAdminRoutes);
   const routesGeneral = formatSidebarRoutes(generalRoutes);
-
+  
   return (
     <div className="h-screen  overflow-y-auto  no-scrollbar dark:bg-dark-secondary p-5">
       <div className="flex items-center justify-between">
         <h1 className="dark:text-white text-4xl font-semibold font-primary">
           Gadget<span className="text-primary">Galaxy</span>
         </h1>
-        <button className="text-2xl  text-primary  ">
+        <button className="text-2xl  text-primary lg:block hidden  ">
           <TfiMenu />
+        </button>
+        <button onClick={()=>closeFn && closeFn()} className="text-4xl  text-primary  lg:hidden block ">
+        <RxCross2 />
         </button>
       </div>
 

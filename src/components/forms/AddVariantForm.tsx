@@ -1,7 +1,8 @@
-import React, { FormEvent, useEffect, useRef, useState } from "react";
+import React, { FormEvent, useContext, useEffect, useRef, useState } from "react";
 import { TFieldError } from "../../types/util.type";
 import { getFormValues } from "../../utils/function";
 import { TAddVariant } from "../../types/product.type";
+import { AddProductContext } from "../../pages/AddProduct";
 
 type TAttribute = {
   name: string;
@@ -9,25 +10,27 @@ type TAttribute = {
 };
 
 interface IProps {
-  onAdd: (data:TAddVariant) => void;
+  onAdd: (data: TAddVariant) => void;
   onDiscard: () => void;
+  currentVariants: TAddVariant[];
 }
 
-const AddVariantForm = ({ onAdd, onDiscard }: IProps) => {
-  const [selectedColor, setSelectedColor] = useState<{ name: string; colorCode: string } | null>(
-    null,
-  );
+type TColor = { colorName: string; colorCode: string };
+
+const AddVariantForm = ({ onAdd, onDiscard, currentVariants }: IProps) => {
+  const [selectedColor, setSelectedColor] = useState<TColor | null>(null);
   const [attributes, setAttributes] = useState<TAttribute[]>([]);
   const [attributeName, setAttributeName] = useState("");
   const [attributeValue, setAttributeValue] = useState("");
   const ref = useRef<HTMLFormElement>(null);
-  const prevColors = [
-    { name: "Red", colorCode: "#FF0000" },
-    { name: "Blue", colorCode: "#0000FF" },
-    { name: "Green", colorCode: "#008000" },
-    { name: "Yellow", colorCode: "#FFFF00" },
-    { name: "Purple", colorCode: "#800080" },
-  ];
+  const prevColors =
+    currentVariants.reduce((acc, item) => {
+      if (!acc.some((color) => color.colorName === item.colorName)) {
+        acc.push({ colorName: item.colorName, colorCode: item.colorCode });
+      }
+      return acc;
+    }, [] as TColor[]) || [];
+
   const [error, setError] = useState<TFieldError>({});
 
   const handelAddAttribute = () => {
@@ -38,6 +41,8 @@ const AddVariantForm = ({ onAdd, onDiscard }: IProps) => {
       err["att.name"] = "Name is empty";
     } else if (values.name.replace(" ", "").length > 12) {
       err["att.name"] = "Name can't be getter than 12 character";
+    } else if (attributes.map((_) => _.name).includes(values.name.trim())) {
+      err["att.name"] = "Already exist";
     }
 
     if (!values.value.replace(" ", "").length) {
@@ -45,6 +50,7 @@ const AddVariantForm = ({ onAdd, onDiscard }: IProps) => {
     } else if (values.value.replace(" ", "").length > 12) {
       err["att.value"] = "Value can't be getter than 12 character";
     }
+
     if (Object.keys(err).length) return setError(err);
     setAttributes((prev) => [...prev, values]);
   };
@@ -67,8 +73,6 @@ const AddVariantForm = ({ onAdd, onDiscard }: IProps) => {
       "color.code",
     ]);
 
-    console.log(values)
-
     // Validation logic
     let errors: Record<string, string> = {};
 
@@ -80,9 +84,7 @@ const AddVariantForm = ({ onAdd, onDiscard }: IProps) => {
       errors["inventory.availableQuantity"] = "Quantity must be a valid non-negative number.";
     }
 
-    if (
-      !values["inventory.sku"] 
-    ) {
+    if (!values["inventory.sku"]) {
       errors["inventory.sku"] = "sku is required minium 2 and max 10 character";
     }
 
@@ -101,8 +103,9 @@ const AddVariantForm = ({ onAdd, onDiscard }: IProps) => {
       errors["pricing.offerPrice"] = "Offer price must be a valid non-negative number.";
     }
 
-    if(Number( values["pricing.offerPrice"])> Number(values["pricing.price"]))  errors["pricing.offerPrice"] = "Offer price can not be getter than main price";
-     
+    if (Number(values["pricing.offerPrice"]) > Number(values["pricing.price"]))
+      errors["pricing.offerPrice"] = "Offer price can not be getter than main price";
+
     if (!values["color.name"] || values["color.name"].trim() === "") {
       errors["color.name"] = "Color name is required.";
     }
@@ -117,20 +120,24 @@ const AddVariantForm = ({ onAdd, onDiscard }: IProps) => {
       return setError(errors);
     }
     const data = {
-        sku: values["inventory.sku"],
-        availableQuantity: parseInt(values[ "inventory.availableQuantity"]),
-        price:parseInt(values ["pricing.price"]),
-        offerPrice:parseInt(values[ "inventory.offerPrice"]),
-        colorName:values["color.name"],
-        colorCode: values["color.code"],
-        attributes
-    }
-   onAdd(data)
+      sku: values["inventory.sku"],
+      availableQuantity: parseInt(values["inventory.availableQuantity"]),
+      price: parseInt(values["pricing.price"]),
+      offerPrice: parseInt(values["inventory.offerPrice"]),
+      colorName: values["color.name"],
+      colorCode: values["color.code"],
+      attributes,
+    };
+    onAdd(data);
   };
 
-
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === "Enter") {
+      e.preventDefault();
+    }
+  };
   return (
-    <form ref={ref} onSubmit={handleAddVariant}>
+    <form ref={ref} onSubmit={handleAddVariant} onKeyDown={handleKeyDown}>
       <div>
         {" "}
         <h1 className="text-2xl  dark:text-white text-black font-medium">Add Product Variant</h1>
@@ -145,9 +152,9 @@ const AddVariantForm = ({ onAdd, onDiscard }: IProps) => {
                   onClick={() => {
                     setSelectedColor(_);
                   }}
-                  className={`flex items-center gap-2  px-4 py-2 rounded-full ${selectedColor?.name === _.name ? "dark:bg-dark-light bg-blue-100" : " dark:bg-dark-secondary"} hover:cursor-pointer`}
+                  className={`flex items-center gap-2  px-4 py-2 rounded-full ${selectedColor?.colorName === _.colorName ? "dark:bg-dark-light bg-blue-100" : " dark:bg-dark-secondary"} hover:cursor-pointer`}
                 >
-                  <p className="tex-lg dark:text-dark-text-primary">{_.name}</p>
+                  <p className="tex-lg dark:text-dark-text-primary">{_.colorName}</p>
                   <div
                     className="size-5 rounded-full"
                     style={{ backgroundColor: _.colorCode }}
@@ -161,17 +168,35 @@ const AddVariantForm = ({ onAdd, onDiscard }: IProps) => {
                 <input
                   type="text"
                   name="color.name"
+                  onChange={(e) =>
+                    setSelectedColor({
+                      colorName: e.target.value.trim(),
+                      colorCode: selectedColor?.colorCode || "",
+                    })
+                  }
                   className="w-full p-2  border-2 dark:border-white/10 border-gray-600/20  rounded-lg focus:outline-2 outline-primary focus:border-none  dark:text-white/80"
-                  defaultValue={selectedColor?.name}
+                  defaultValue={selectedColor?.colorName}
                 />
               </div>
               <div className=" space-y-2">
                 <h6 className="dark:text-dark-text-primary">Chose color</h6>
+
                 <input
                   type="color"
                   name="color.code"
-                  className=" w-1/2  border-none outline-none  h-10 rounded-lg"
-                  defaultValue={selectedColor?.colorCode}
+                  className="w-1/2 border-none outline-none h-10 rounded-lg"
+                  value={
+                    prevColors.find((_) => _.colorName === selectedColor?.colorName)?.colorCode ||
+                    selectedColor?.colorCode ||
+                    ""
+                  }
+                  readOnly={prevColors.some((_) => _.colorName === selectedColor?.colorName)}
+                  onChange={(e) =>
+                    setSelectedColor({
+                      colorName: selectedColor?.colorName || "",
+                      colorCode: e.target.value,
+                    })
+                  }
                 />
               </div>
             </div>
@@ -179,11 +204,12 @@ const AddVariantForm = ({ onAdd, onDiscard }: IProps) => {
           {/*Attributes */}
           <div className="mt-5 dark:bg-dark-secondary bg-white p-5 rounded-lg">
             <h3 className="dark:text-dark-text-primary font-medium text-xl">Attributes</h3>
-            <div className="p-3 mt-3  border-2 dark:border-white/20 border-gray-600/20 rounded-lg    grid grid-cols-2 gap-2">
+            <div className="p-3 mt-3  border-2 dark:border-white/20 border-gray-600/20 rounded-lg    grid md:grid-cols-2 gap-2">
               <div className=" space-y-2">
                 <h6 className="dark:text-dark-text-primary">Name</h6>
                 <input
                   onChange={(e) => setAttributeName(e.target.value)}
+                  onMouseDown={(e) => {}}
                   type="text"
                   className="w-full p-2  border-2 dark:border-white/10 border-gray-600/20  rounded-lg focus:outline-2 outline-primary focus:border-none  dark:text-white/80"
                 />

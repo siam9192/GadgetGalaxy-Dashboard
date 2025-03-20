@@ -2,12 +2,11 @@ import { RiSearch2Line } from "react-icons/ri";
 import { GoBell } from "react-icons/go";
 import ThemeToggler from "../ui/ThemeToggler";
 import { HiMenu } from "react-icons/hi";
+import ResponsiveSidebar from "../ui/ResponsiveSidebar";
 const Header = () => {
   return (
     <header className=" sticky top-0 py-6 px-5 dark:bg-dark-secondary bg-white flex justify-between items-center z-40">
-      <button className="text-3xl text-primary block lg:hidden">
-        <HiMenu />
-      </button>
+    <ResponsiveSidebar/>
       <h1 className="md:text-2xl text-xl dark:text-dark-text-primary text-black font-medium">
         Dashboard
       </h1>

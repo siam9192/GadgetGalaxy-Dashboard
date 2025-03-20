@@ -1,7 +1,7 @@
 import App from "../App";
 import CommonLayout from "../layout/CommonLayout";
-import AddProduct from "../pages/AddProduct";
-import Home from "../pages/Home";
+import superAdminRoutes from "../routes/superAdmin.routes";
+import { formatRouterRoutes } from "../utils/function";
 
 const routes = [
   {
@@ -11,16 +11,7 @@ const routes = [
       {
         path: "/",
         element: <CommonLayout />,
-        children: [
-          {
-            path: "",
-            element: <Home />,
-          },
-          {
-            path: "add-product",
-            element: <AddProduct />,
-          },
-        ],
+        children:formatRouterRoutes(superAdminRoutes),
       },
     ],
   },

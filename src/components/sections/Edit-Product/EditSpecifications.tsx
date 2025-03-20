@@ -1,19 +1,18 @@
 import React, { FormEvent, useContext, useEffect, useRef, useState } from "react";
 import { getFormValues } from "../../../utils/function";
 import { TFieldError } from "../../../types/util.type";
-import { AddProductContext } from "../../../pages/AddProduct";
+import { EditProductContext } from "../../../pages/EditProduct";
 
 type TSpec = {
   name: string;
   value: string;
 };
 
-const AddSpecification = () => {
-  const [specifications, setSpecifications] = useState<TSpec[]>([]);
+const EditSpecifications = () => {
   const [error, setError] = useState<TFieldError>({});
   const ref = useRef<HTMLFormElement>(null);
-  const context = useContext(AddProductContext);
-
+  const context = useContext(EditProductContext)!;
+  const specifications = context.data.specifications.filter((spec) => spec?.isDeleted !== true);
   const handelAddSpec = (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setError({});
@@ -26,18 +25,22 @@ const AddSpecification = () => {
       err.value = "Value is empty";
     }
     if (Object.keys(err).length) return setError(err);
-    setSpecifications((prev) => [...prev, values]);
+    context?.updateData({ ...context.data, specifications: [...specifications, values] } as any);
     ref.current?.reset();
   };
 
-  const handelRemoveSpec = (index: number) =>
-    setSpecifications(specifications.filter((_, idx) => index !== idx));
+  const handelRemoveSpec = (index: number) => {
+    const updatedSpecs = specifications
+      ?.map((_, idx) => {
+        if (idx !== index) return _;
+        if (!_.id) return undefined;
+        _.isDeleted = true;
+        return _;
+      })
+      .filter((_) => typeof _ !== "undefined");
+    context.updateData({ ...context.data, specifications: updatedSpecs } as any);
+  };
 
-  useEffect(() => {
-    if (!context) return;
-    const { data, updateData } = context;
-    updateData({ ...data, specifications });
-  }, [specifications]);
   return (
     <div className="mt-5 dark:bg-dark-secondary bg-white p-5 rounded-lg">
       <h3 className="dark:text-dark-text-primary font-medium text-xl">Specification</h3>
@@ -93,4 +96,4 @@ const AddSpecification = () => {
   );
 };
 
-export default AddSpecification;
+export default EditSpecifications;

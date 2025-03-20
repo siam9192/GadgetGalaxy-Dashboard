@@ -1,36 +1,67 @@
 import React, { createContext, useState } from "react";
 import { HiArrowLongLeft } from "react-icons/hi2";
-import AddProductImages from "../components/sections/Add-Product/AddProductImages";
-import AddSpecification from "../components/sections/Add-Product/AddSpecification";
 import AddVariant from "../components/sections/Add-Product/AddVariant";
-import { TAddProductData } from "../types/product.type";
-import AddCategories from "../components/sections/Add-Product/AddCategories";
-import { validateProductData } from "../utils/function";
+import { TAddProductData, TEditProductData } from "../types/product.type";
 import { TFieldError } from "../types/util.type";
-import AddBrand from "../components/sections/Add-Product/AddBrand";
+import { AddProductContext } from "./AddProduct";
+import EditCategories from "../components/sections/Edit-Product/EditCategories";
+import EditProductImages from "../components/sections/Edit-Product/EditProductImages";
+import EditSpecifications from "../components/sections/Edit-Product/EditSpecifications";
+import EditVariants from "../components/sections/Edit-Product/EditVariants";
+import EditProductBrand from "../components/sections/Edit-Product/EditProductBrand";
+import { validateEditProductData } from "../utils/function";
 
-const defaultValue: TAddProductData = {
-  name: "",
-  description: "",
-  warranty: "",
+const defaultValue: TEditProductData = {
+  name: "Wireless Earbuds",
+  description: "High-quality noise-canceling wireless earbuds with long battery life.",
+  warranty: "1 year",
   brand: null,
-  categories: [],
-  availableQuantity: null,
-  sku: "",
-  images: [],
-  specifications: [],
-  variants: [],
-  price: null,
-  offerPrice: null,
+  categories: [{ id: 1, name: "Audio", hierarchyStr: "Electronics > Audio" }],
+  availableQuantity: 100,
+  sku: "WB12345",
+  images: [
+    {
+      id: 3,
+      url: "https://img.freepik.com/premium-photo/smartphone-balancing-with-pink-background_23-2150271746.jpg",
+    },
+    {
+      id: 3,
+      url: "https://img.freepik.com/premium-photo/smartphone-balancing-with-pink-background_23-2150271746.jpg",
+    },
+    {
+      id: 3,
+      url: "https://img.freepik.com/premium-photo/smartphone-balancing-with-pink-background_23-2150271746.jpg",
+    },
+  ], // Will be filled with uploaded image files
+  specifications: [
+    { id: 3, name: "Battery Life", value: "24 hours" },
+    { id: 34, name: "Bluetooth Version", value: "5.3" },
+  ],
+
+  variants: [
+    {
+      id: 2,
+      colorName: "Black",
+      colorCode: "#000000",
+      availableQuantity: 50,
+      sku: "WB12345-BLK",
+      attributes: [{ name: "Size", value: "Standard" }],
+      price: 99.99,
+      offerPrice: 79.99,
+    },
+  ],
+  price: 99.99,
+  offerPrice: 79.99,
 };
 
-export const AddProductContext = createContext<{
-  data: TAddProductData;
+export const EditProductContext = createContext<{
+  data: TEditProductData;
   updateData: (data: TAddProductData) => void;
   updateFieldValue: (name: keyof TAddProductData, value: any) => void;
 } | null>(null);
-const AddProduct = () => {
-  const [data, setData] = useState<TAddProductData>(defaultValue);
+
+const EditProduct = () => {
+  const [data, setData] = useState<TEditProductData>(defaultValue);
   const [fieldErrors, setFieldErrors] = useState<TFieldError>({});
 
   const updateFieldValue = (name: keyof TAddProductData, value: any) => {
@@ -39,20 +70,18 @@ const AddProduct = () => {
     setData(temp);
   };
 
-  const updateData = (d: TAddProductData) => {
-    setData(d);
-  };
-
   const handelSubmit = () => {
     setFieldErrors({});
-    const validationErrors = validateProductData(data);
-    if (Object.keys(validationErrors).length) {
-      return setFieldErrors(validationErrors);
+    // Validation
+    const validationErrors = validateEditProductData(data)
+    if(Object.keys(validationErrors).length){
+      setFieldErrors(validationErrors);
     }
   };
+  const defaultValues = defaultValue;
 
   return (
-    <AddProductContext.Provider value={{ data, updateData: setData, updateFieldValue }}>
+    <EditProductContext.Provider value={{ data, updateData: setData, updateFieldValue }}>
       <div>
         <div className="flex items-center gap-4 dark:bg-transparent bg-white p-5">
           <button className="text-xl text-primary px-2 py-4  dark:bg-dark-secondary bg-white rounded-lg">
@@ -72,6 +101,7 @@ const AddProduct = () => {
                   <h6 className="dark:text-dark-text-primary">Product Name</h6>
                   <input
                     type="text"
+                    defaultValue={defaultValues.name}
                     onChange={(e) => updateFieldValue("name", e.target.value)}
                     className="w-full p-2  border-2 dark:border-white/10 border-gray-600/20  rounded-lg focus:outline-2 outline-primary focus:border-none  dark:text-white/80"
                   />
@@ -79,6 +109,7 @@ const AddProduct = () => {
                 <div className=" space-y-2">
                   <h6 className="dark:text-dark-text-primary">Description</h6>
                   <textarea
+                    defaultValue={defaultValues.description}
                     onChange={(e) => updateFieldValue("description", e.target.value)}
                     placeholder="Write something about product.."
                     className="w-full p-2 dark:text-white/75  border-2 dark:border-white/10 border-gray-600/20 rounded-lg focus:outline-2 outline-primary focus:border-none  h-60 resize-none"
@@ -87,6 +118,7 @@ const AddProduct = () => {
                 <div className=" space-y-2">
                   <h6 className="dark:text-dark-text-primary">Warranty</h6>
                   <textarea
+                    defaultValue={defaultValues.warranty}
                     onChange={(e) => updateFieldValue("warranty", e.target.value)}
                     placeholder="Write something about product warranty.."
                     className="w-full p-2 dark:text-white/75  border-2 dark:border-white/10 border-gray-600/20 rounded-lg focus:outline-2 outline-primary focus:border-none  h-60 resize-none"
@@ -94,10 +126,10 @@ const AddProduct = () => {
                 </div>
               </div>
             </div>
-            {/*Brand */}
-            <AddBrand />
+            {/* Add Brand */}
+            <EditProductBrand />
             {/* Add Category */}
-            <AddCategories />
+            <EditCategories />
             {/* Inventory */}
             <div className="mt-5 dark:bg-dark-secondary bg-white p-5 rounded-lg">
               <h3 className="dark:text-dark-text-primary font-medium text-xl">Inventory</h3>
@@ -106,6 +138,7 @@ const AddProduct = () => {
                   <h6 className="dark:text-dark-text-primary">Quantity</h6>
                   <input
                     type="number"
+                    defaultValue={defaultValues.availableQuantity!}
                     onChange={(e) =>
                       updateFieldValue("availableQuantity", parseInt(e.target.value))
                     }
@@ -116,6 +149,7 @@ const AddProduct = () => {
                   <h6 className="dark:text-dark-text-primary">SKU</h6>
                   <input
                     type="text"
+                    defaultValue={defaultValues.sku!}
                     onChange={(e) => updateFieldValue("sku", e.target.value)}
                     className="w-full p-2  border-2 dark:border-white/10 border-gray-600/20  rounded-lg focus:outline-2 outline-primary focus:border-none  dark:text-white/80"
                   />
@@ -123,12 +157,12 @@ const AddProduct = () => {
               </div>
             </div>
             {/* Add specification */}
-            <AddSpecification />
+            <EditSpecifications />
             {/* Add Variant */}
-            <AddVariant />
+            <EditVariants />
           </div>
           <div>
-            <AddProductImages />
+            <EditProductImages />
             {/* Pricing */}
             <div className="mt-5 dark:bg-dark-secondary bg-white p-5 rounded-lg">
               <h3 className="dark:text-dark-text-primary font-medium text-xl">Pricing</h3>
@@ -183,8 +217,8 @@ const AddProduct = () => {
           </div>
         </div>
       </div>
-    </AddProductContext.Provider>
+    </EditProductContext.Provider>
   );
 };
 
-export default AddProduct;
+export default EditProduct;

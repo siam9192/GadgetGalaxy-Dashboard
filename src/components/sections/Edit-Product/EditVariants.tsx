@@ -1,25 +1,34 @@
-import  { useContext } from "react";
+import React, { useContext } from "react";
 import AddVariantPopup from "../../ui/AddVariantPopup";
 import { AddProductContext } from "../../../pages/AddProduct";
 import { TbCurrencyTaka } from "react-icons/tb";
 import { IoTrashOutline } from "react-icons/io5";
 import { MdOutlineEdit } from "react-icons/md";
+import { EditProductContext } from "../../../pages/EditProduct";
 import { TAddVariant } from "../../../types/product.type";
-const AddVariant = () => {
-  const context = useContext(AddProductContext);
-  const variants = context?.data.variants||[];
+const EditVariants = () => {
+  const context = useContext(EditProductContext);
+  const variants = (context?.data.variants || []).filter(
+    (_) => _.isDeleted === undefined || _.isDeleted === false,
+  );
 
-  // Throw an error on context no found
+  // Throw an error on context not found
   if (!context) throw new Error();
   const removeVariant = (index: number) => {
-    const { data, updateData } = context;
-    updateData({ ...data, variants: data.variants.filter((_, idx) => index !== idx) });
+    const updatedVariants = variants
+      ?.map((_, idx) => {
+        if (idx !== index) return _;
+        if (!_.id) return undefined;
+        _.isDeleted = true;
+        return _;
+      })
+      .filter((_) => typeof _ !== "undefined");
+    context.updateData({ ...context.data, variants: updatedVariants } as any);
   };
 
   const handelOnAdd = (variant: TAddVariant) => {
-     context.updateData({ ...context.data, variants: [...variants, variant] } as any);
-   };
-
+    context.updateData({ ...context.data, variants: [...variants, variant] } as any);
+  };
   return (
     <div className="mt-5 dark:bg-dark-secondary bg-white p-5 rounded-lg">
       <h3 className="dark:text-dark-text-primary font-medium text-xl">Variant</h3>
@@ -27,7 +36,7 @@ const AddVariant = () => {
         <div className=" space-y-2">
           <div className="w-full p-3  border-2 dark:border-white/10 border-gray-600/20  rounded-lg focus:outline-2 outline-primary focus:border-none  dark:text-white/80 flex items-center justify-between">
             <p>Product variants</p>
-            <AddVariantPopup currentVariants={variants} onAdd={handelOnAdd}/>
+            <AddVariantPopup onAdd={handelOnAdd} currentVariants={context.data.variants} />
           </div>
         </div>
         <div className="mt-4  grid grid-cols-1 gap-3">
@@ -101,4 +110,4 @@ const AddVariant = () => {
   );
 };
 
-export default AddVariant;
+export default EditVariants;
